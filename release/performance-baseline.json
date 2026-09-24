@@ -1,0 +1,186 @@
+{
+  "schema": "pig.workbench-performance-baseline",
+  "version": "1.0",
+  "generated_at": "2026-09-24T02:44:09.072458+00:00",
+  "reference_environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.10.10 (tags/v3.10.10:aad5f6a, Feb  7 2023, 17:20:36) [MSC v.1929 64 bit (AMD64)]",
+    "logical_cpu_count": 12
+  },
+  "fixture": {
+    "tree_items": 10000,
+    "snapshot_files": 2000,
+    "zip_entries": 10000,
+    "large_file_mib": 64,
+    "export_files": 500,
+    "repeats": 3
+  },
+  "results": {
+    "workspace_tree_10k": {
+      "runs": [
+        {
+          "seconds": 5.731668199878186,
+          "peak_rss_bytes": 117080064
+        },
+        {
+          "seconds": 5.73440850013867,
+          "peak_rss_bytes": 127291392
+        },
+        {
+          "seconds": 5.75291550019756,
+          "peak_rss_bytes": 128331776
+        }
+      ],
+      "median_seconds": 5.734409,
+      "throughput_per_second": 1743.859,
+      "peak_rss_bytes": 128331776,
+      "ui_busy_duration_seconds": 5.734409
+    },
+    "workspace_search_10k": {
+      "runs": [
+        {
+          "seconds": 5.738891600165516,
+          "peak_rss_bytes": 127053824
+        },
+        {
+          "seconds": 5.775418899953365,
+          "peak_rss_bytes": 128217088
+        },
+        {
+          "seconds": 5.854254100006074,
+          "peak_rss_bytes": 128266240
+        }
+      ],
+      "median_seconds": 5.775419,
+      "throughput_per_second": 1731.476,
+      "peak_rss_bytes": 128266240,
+      "ui_busy_duration_seconds": 5.775419
+    },
+    "snapshot_import_2k": {
+      "runs": [
+        {
+          "seconds": 11.881353799719363,
+          "peak_rss_bytes": 124465152
+        },
+        {
+          "seconds": 10.904457000084221,
+          "peak_rss_bytes": 125083648
+        },
+        {
+          "seconds": 10.750810700003058,
+          "peak_rss_bytes": 125145088
+        }
+      ],
+      "median_seconds": 10.904457,
+      "throughput_per_second": 183.411,
+      "peak_rss_bytes": 125145088,
+      "ui_busy_duration_seconds": 10.904457
+    },
+    "zip_inspection_10k": {
+      "runs": [
+        {
+          "seconds": 104.91135570034385,
+          "peak_rss_bytes": 133021696
+        },
+        {
+          "seconds": 108.70869799982756,
+          "peak_rss_bytes": 136839168
+        },
+        {
+          "seconds": 108.33890119986609,
+          "peak_rss_bytes": 137154560
+        }
+      ],
+      "median_seconds": 108.338901,
+      "throughput_per_second": 92.303,
+      "peak_rss_bytes": 137154560,
+      "ui_busy_duration_seconds": 108.338901
+    },
+    "large_file_materialize": {
+      "runs": [
+        {
+          "seconds": 0.8929339000023901,
+          "peak_rss_bytes": 133423104
+        },
+        {
+          "seconds": 0.8045252002775669,
+          "peak_rss_bytes": 134008832
+        },
+        {
+          "seconds": 0.7234317995607853,
+          "peak_rss_bytes": 134684672
+        }
+      ],
+      "median_seconds": 0.804525,
+      "throughput_per_second": 83414247.281,
+      "peak_rss_bytes": 134684672,
+      "ui_busy_duration_seconds": 0.804525
+    },
+    "large_file_refresh_hash": {
+      "runs": [
+        {
+          "seconds": 0.90964649990201,
+          "peak_rss_bytes": 133443584
+        },
+        {
+          "seconds": 0.7165632001124322,
+          "peak_rss_bytes": 134008832
+        },
+        {
+          "seconds": 0.7142658997327089,
+          "peak_rss_bytes": 134492160
+        }
+      ],
+      "median_seconds": 0.716563,
+      "throughput_per_second": 93653796.329,
+      "peak_rss_bytes": 134492160,
+      "ui_busy_duration_seconds": 0.716563
+    },
+    "folder_export": {
+      "runs": [
+        {
+          "seconds": 70.68258179957047,
+          "peak_rss_bytes": 161714176
+        },
+        {
+          "seconds": 71.87144660018384,
+          "peak_rss_bytes": 165580800
+        },
+        {
+          "seconds": 71.07420389959589,
+          "peak_rss_bytes": 167776256
+        }
+      ],
+      "median_seconds": 71.074204,
+      "throughput_per_second": 7.035,
+      "peak_rss_bytes": 167776256,
+      "ui_busy_duration_seconds": 71.074204
+    },
+    "zip_export": {
+      "runs": [
+        {
+          "seconds": 21.204799899831414,
+          "peak_rss_bytes": 161738752
+        },
+        {
+          "seconds": 21.9889348000288,
+          "peak_rss_bytes": 164737024
+        },
+        {
+          "seconds": 21.10750599997118,
+          "peak_rss_bytes": 166281216
+        }
+      ],
+      "median_seconds": 21.2048,
+      "throughput_per_second": 23.58,
+      "peak_rss_bytes": 166281216,
+      "ui_busy_duration_seconds": 21.2048
+    }
+  },
+  "maximum_sqlite_bytes": 87928832,
+  "regression_policy": {
+    "comparison": "same reference environment",
+    "failure_threshold_percent": 25
+  },
+  "interpretation": "这是首个 Workbench 参考基线，不是跨设备 SLA。 / This is the first Workbench reference baseline, not a cross-device SLA."
+}

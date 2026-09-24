@@ -1,0 +1,55 @@
+# Python environments, caches, and local tooling
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Local Project data and acceptance output
+acceptance/
+runtime/
+*.sqlite
+*.sqlite3
+*.db
+*.db-shm
+*.db-wal
+*.log
+
+# Build and package output
+build/
+dist/
+*.spec.bak
+
+# Machine-specific generated release evidence
+release/windows-build-report.json
+release/windows-file-inventory.json
+release/pig-runtime.cdx.json
+release/pip-audit.json
+
+# Credentials, signing material, and local configuration
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+*.snk
+
+# Editors and operating systems
+.agents/
+.codex/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
