@@ -349,7 +349,13 @@ def test_rar_backend_identity_is_persisted_without_executable_path(
 
 def test_missing_system_seven_zip_is_a_durable_unsupported_result(
     tmp_path: Path,
+    monkeypatch,
 ) -> None:
+    monkeypatch.setattr(
+        bootstrap_module.SevenZipRarBackend,
+        "discover_standard_windows_installation",
+        staticmethod(lambda: None),
+    )
     source = tmp_path / "missing-backend.rar"
     source.write_bytes(b"not-opened-without-config")
     application, project = _project(tmp_path)
