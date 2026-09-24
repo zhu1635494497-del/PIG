@@ -1,6 +1,6 @@
 # PIG V1 Workbench W9 实施记录 / Implementation Record
 
-- 状态：本地公开源码基线与 Unsigned Internal RC 已就绪；首次 Push 已批准，正式 Release 仍阻断 / Status: local public-source baseline and unsigned Internal RC ready; first push approved, official Release still blocked
+- 状态：公开源码基线已推送且远程 CI 已通过；Unsigned Internal RC 本地已就绪，正式 Release 仍阻断 / Status: public-source baseline pushed and remote CI passed; local unsigned Internal RC ready, official Release still blocked
 - 日期：2026-09-24 / Date: 2026-09-24
 - 决策：`ADR-021`，D78-A 至 D91-A / Decisions: `ADR-021`, D78-A through D91-A
 - 目标仓库：`https://github.com/zhu1635494497-del/PIG.git` / Target repository: `https://github.com/zhu1635494497-del/PIG.git`
@@ -19,7 +19,8 @@
   但不创建 GitHub Release、不签名、不接触证书。
 - 建立 W9 Release Checklist 和第三方许可证人工复核模板。
 - 将 `pyproject.toml` 连接到公开仓库并声明 PIG 自有代码 Apache-2.0。
-- 初始化本地 Git `main`，设置目标 `origin`；尚无 Commit 或 Push。
+- 首次公开提交 `b322f3a` 已推送到目标仓库 `main`；作者身份使用 GitHub noreply
+  邮箱。CI 主机差异修复提交 `3caddb7` 随后推送并通过远程 CI。
 
 ### 2. 涉及的领域对象
 
@@ -43,6 +44,7 @@ Recovery Run 或 Processing Event。Release Evidence 是构建资产，不进入
 
 - Project 与 Workspace 状态机不变。
 - W9 当前发布判定仍为 `BLOCKED`；本机构建只达到 `PASS_INTERNAL_ACCEPTANCE`。
+- 公开源码 `main` 当前为 `3caddb7`；对应远程 CI 状态为 `success`。
 - CI Log、Build Report、Package Inventory、SBOM、Audit、Notice 和 Checklist 是 Release
   Evidence，不写入业务 Processing Event。
 
@@ -56,7 +58,7 @@ Workflow/Automation Engine，也不对 Agent 或 MCP 暴露能力。
 - Workflow 只授予 `contents: read`。
 - 不在 Workflow 中保存 Authenticode 私钥，不自动发布正式 Release。
 - 首次候选清单不包含本地 Project、SQLite、验收数据、构建二进制或常见 Secret Marker。
-- 公开 Push 是不可逆外发边界；必须在精确暂存清单和 Commit 作者身份确认后执行。
+- 首次公开 Push 已在精确暂存清单、产品负责人最终确认和 noreply 作者身份修订后执行。
 - GitHub Actions 版本和 Commit SHA Pin 策略仍需在正式 Release 前复核。
 
 ### 7. 测试结果
@@ -72,13 +74,16 @@ Workflow/Automation Engine，也不对 Agent 或 MCP 暴露能力。
 - W9 本机 Package：922 个文件、113,093,576 Bytes，不含 `7z.exe`，Build SHA-256
   `6dff8f014c9fb2955c0477cafb7a23f877401092c4fb4636df0b8147dd86bf61`。
 - 常见 GitHub/AWS Token 和 Private Key Marker：公开候选零命中。
+- 首次远程 CI `b322f3a` 发现测试依赖主机是否预装 7-Zip；测试已改为显式模拟
+  “无 7-Zip”条件，不改变生产代码。
+- 修复提交 `3caddb7` 的远程 Windows Python 3.10 CI：
+  `148 passed, 93 skipped, 1 warning`，结论 `success`。
 
 ### 8. 尚未闭环
 
-- Git 作者 `Littlie pig <zhu1635494497@gmail.com>` 与首次公开 Push 已获明确批准；首次
-  Commit 尚待执行。
-- 目标 GitHub 仓库因当前环境网络重置无法只读确认远程状态。
-- 首次公开 Push、远程 CI 和远程 Unsigned Internal RC 尚未执行。
+- 公开仓库、`main` 默认分支、首次 Push 与远程 CI 已确认；仓库安全设置和 Private
+  Vulnerability Reporting 仍需人工确认。
+- 远程 Unsigned Internal RC 尚未执行。
 - 第三方许可证人工复核未完成；GPL/LGPL、Qt/PySide 与 `extract-msg` 链需要书面结论。
 - Authenticode 证书、可信时间戳、干净 Windows 主机矩阵、真实 RAR 和最终签名包桌面
   验收未完成。
@@ -108,8 +113,9 @@ Workflow/Automation Engine，也不对 Agent 或 MCP 暴露能力。
 - Added the W9 release checklist and third-party human license-review template.
 - Linked `pyproject.toml` to the public repository and declared Apache-2.0 for
   PIG-owned code.
-- Initialized local Git `main` and configured the target `origin`; no commit or
-  push exists yet.
+- Pushed initial public commit `b322f3a` to the target repository's `main`
+  branch using the GitHub noreply author identity. Follow-up CI host-isolation
+  fix `3caddb7` was pushed and passed remote CI.
 
 ### 2. Domain objects
 
@@ -135,6 +141,8 @@ audited source and documentation
 - Project and Workspace state machines are unchanged.
 - W9 remains `BLOCKED` for official release; the local build reaches only
   `PASS_INTERNAL_ACCEPTANCE`.
+- Public-source `main` is currently `3caddb7`; its remote CI conclusion is
+  `success`.
 - CI logs, build report, package inventory, SBOM, audit, notices, and checklist
   are Release Evidence, not business Processing Events.
 
@@ -151,8 +159,8 @@ surface.
   published automatically.
 - The initial candidate excludes local Projects, SQLite, acceptance data, build
   binaries, and common secret markers.
-- A public push is an irreversible external boundary and requires confirmation
-  of the exact staged inventory and commit-author identity.
+- The first public push was executed only after exact inventory confirmation,
+  final product-owner approval, and revision to the noreply author identity.
 - GitHub Actions versions and the commit-SHA pinning strategy remain subject to
   review before an official Release.
 
@@ -170,14 +178,18 @@ surface.
 - Local W9 package: 922 files and 113,093,576 bytes, no `7z.exe`, build SHA-256
   `6dff8f014c9fb2955c0477cafb7a23f877401092c4fb4636df0b8147dd86bf61`.
 - Common GitHub/AWS token and private-key markers: zero candidate hits.
+- Initial remote CI for `b322f3a` exposed a test dependency on whether the host
+  had 7-Zip preinstalled. The test now explicitly simulates the no-7-Zip
+  condition without changing production code.
+- Remote Windows Python 3.10 CI for fix commit `3caddb7` passed with
+  `148 passed, 93 skipped, 1 warning` and conclusion `success`.
 
 ### 8. Open boundaries
 
-- Git author `Littlie pig <zhu1635494497@gmail.com>` and the first public push
-  are explicitly approved; the initial commit is not yet executed.
-- The target repository's remote state could not be read because this environment
-  reset the GitHub connection.
-- First public push, remote CI, and remote unsigned Internal RC are not run.
+- The public repository, default `main` branch, first push, and remote CI are
+  verified. Repository security settings and Private Vulnerability Reporting
+  still require human confirmation.
+- Remote unsigned Internal RC has not been run.
 - Human third-party license review remains incomplete; GPL/LGPL, Qt/PySide, and
   the `extract-msg` chain require written conclusions.
 - Authenticode certificate/timestamp, clean-Windows matrix, real RAR, and final

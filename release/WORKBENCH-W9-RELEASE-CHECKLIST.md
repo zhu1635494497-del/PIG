@@ -13,6 +13,7 @@
 - [x] Candidate Workflow 只生成明确标记的 Unsigned Internal RC，不创建 GitHub Release。 / The candidate workflow produces an explicitly labeled unsigned Internal RC and does not create a GitHub Release.
 - [ ] GitHub-owned Actions 的版本与最终 Commit SHA Pin 策略已复核。 / GitHub-owned Action versions and the final commit-SHA pinning policy are reviewed.
 - [x] 首次公开 Push 的精确文件清单已由产品负责人最终确认。 / The exact first-public-push inventory has final product-owner confirmation.
+- [x] 首次公开 `main` Push 已完成；当前源码修复提交为 `3caddb7`，作者使用 GitHub noreply 身份。 / The first public `main` push is complete; the current source-fix commit is `3caddb7` and uses the GitHub noreply author identity.
 - [ ] 公开仓库的默认分支、安全设置和 Private Vulnerability Reporting 已人工确认。 / The public repository default branch, security settings, and private vulnerability reporting are manually confirmed.
 
 ## 自动证据门 / Automated evidence gates
@@ -24,7 +25,7 @@
 - [x] PyInstaller `onedir`、No-UPX、无 Console 构建流程存在。 / The PyInstaller `onedir`, no-UPX, no-console build flow is available.
 - [x] Runtime Smoke 与当前 Workbench Packaged Flow 已在开发主机通过。 / Runtime smoke and the current Workbench packaged flow passed on the development host.
 - [x] Package Inventory 确认不捆绑 `7z.exe`。 / Package inventory confirms that `7z.exe` is not bundled.
-- [ ] GitHub Actions CI 首次远程运行通过。 / The first remote GitHub Actions CI run passes.
+- [x] GitHub Actions CI 已在修复测试主机依赖后远程通过（`3caddb7`：`148 passed, 93 skipped, 1 warning`）。 / GitHub Actions CI passed remotely after isolating the host-dependent test (`3caddb7`: `148 passed, 93 skipped, 1 warning`).
 - [ ] GitHub Actions Unsigned Internal RC 首次远程运行通过。 / The first remote GitHub Actions unsigned Internal RC run passes.
 
 ## 人工许可证与签名门 / Human license and signing gates
