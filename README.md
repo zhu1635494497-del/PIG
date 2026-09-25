@@ -1,9 +1,10 @@
-# PIG — Project Ingestion Gateway
+# 🐷 PIG
 
-> 把复杂、嵌套、分散的项目文件，转化为可保护、可整理、可打开和可持续编辑的项目工作区。
+**Project Ingestion Gateway**
+
+> **PIG eats messy project files and turns them into structured, traceable data.**
 >
-> Turn complex, nested, and fragmented project files into a protected,
-> organized, openable, and continuously editable project workspace.
+> **PIG 将杂乱的项目文件转化为结构化、可追溯的数据。**
 
 ## 当前版本定位 / Current Version Positioning
 
@@ -202,45 +203,19 @@ RAR 支持要求 Windows 上安装兼容的 7-Zip。PIG 不捆绑 `7z.exe`；ZIP
 RAR support requires a compatible 7-Zip installation on Windows. PIG does not
 bundle `7z.exe`; ZIP and 7z processing do not depend on external 7-Zip.
 
-## 技术架构 / Technical Architecture
-
-PIG 当前保持单机、模块化架构，不使用微服务、Redis、Kafka、Graph DB、Vector DB 或
-分布式 Worker。
-
-PIG currently uses a local, modular architecture. It does not use microservices,
-Redis, Kafka, a graph database, a vector database, or distributed workers.
-
-```text
-PySide6 Desktop UI
-        |
-Application Services / Use Cases
-        |
-Domain Model, Policies, State and Repository Ports
-        |
-Handlers and Infrastructure Adapters
-        |
-SQLite + Local Project Filesystem
-```
+## 技术栈 / Tech Stack
 
 | 范围 / Area | 技术 / Technology |
 |---|---|
-| Language | Python 3.10+ |
-| Desktop UI | PySide6 / Qt 6 |
-| Persistence | SQLite，每 Project 一个数据库 / one database per Project |
-| ORM and migration | SQLAlchemy 2.x + Alembic |
-| Archive handling | `zipfile`, `py7zr`, controlled 7-Zip adapter |
-| Email handling | Python `email` + `extract-msg` |
-| Local storage | Immutable Original Snapshot + lazy Working Artifact |
-| Testing | pytest |
-| Packaging | PyInstaller `onedir` portable build |
-| Continuous integration | GitHub Actions on Windows / Python 3.10 |
-
-代码按 `UI -> Application -> Domain -> Infrastructure` 分层。文件格式能力通过 Handler
-隔离；UI 不直接执行 SQL、解压、Hash、安全校验或来源关系计算。
-
-The codebase follows `UI -> Application -> Domain -> Infrastructure` layering.
-File-format capabilities are isolated behind Handlers. The UI does not execute
-SQL, extraction, hashing, security validation, or origin relationship logic.
+| 语言 / Language | Python 3.10+ |
+| 桌面端 / Desktop UI | PySide6 / Qt 6 |
+| 数据库 / Database | SQLite（每个 Project 独立数据库 / one database per Project） |
+| ORM 与迁移 / ORM & migrations | SQLAlchemy 2.x + Alembic |
+| 压缩包 / Archives | Python `zipfile`, `py7zr`, controlled 7-Zip adapter |
+| 邮件 / Email | Python `email` + `extract-msg` |
+| 测试 / Testing | pytest |
+| 打包 / Packaging | PyInstaller `onedir` |
+| 持续集成 / CI | GitHub Actions |
 
 ## 如何使用 / How to Use
 
@@ -367,3 +342,8 @@ PIG-owned code is licensed under the [Apache License 2.0](LICENSE). Third-party
 components remain governed by their own licenses. Generated
 [Third-Party Notices](release/THIRD_PARTY_NOTICES.md) do not replace human
 compliance review.
+
+## 贡献者 / Contributors
+
+- [Littlie pig](https://github.com/zhu1635494497-del) — 项目发起人与产品负责人 / Project creator and product owner
+- **ChatGPT (OpenAI)** — 架构、实现、测试与文档协作 / Architecture, implementation, testing, and documentation collaboration
