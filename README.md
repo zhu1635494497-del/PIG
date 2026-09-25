@@ -27,32 +27,6 @@ builds an editable Workspace Tree. Files can then be searched, moved, added,
 deleted, restored, opened, edited, and exported without repeatedly unpacking
 archives, saving attachments, and navigating intermediate folders by hand.
 
-```text
-External Files / Folders
-  -> Immutable Original Snapshot
-  -> Nested Structure Discovery
-  -> Editable Workspace Tree
-  -> Lazy File Materialization
-  -> Open / Edit / Refresh
-  -> Search / Organize / Export
-```
-
-PIG 不是普通文件管理器、通用解压工具或“文件管理器加 AI Chat”。V1 的重点是把复杂
-文件处理闭环做好；当前不使用 LLM，也不分析文档正文的业务语义。
-
-PIG is not a general-purpose file manager, a generic archive utility, or a file
-browser with an AI chat panel. V1 focuses on completing the complex-file
-workflow reliably. It does not use an LLM or analyze the business meaning of
-document contents.
-
-> **当前状态 / Current status:** 仓库版本为 `0.1.0`。V1 源码桌面流程已经完成并通过
-> 真实数据验收；正式签名 Windows Release 仍需完成许可证、代码签名和干净主机等人工
-> 发布 Gate。当前自动构建只应视为 Unsigned Internal RC。
->
-> The repository version is `0.1.0`. The V1 source-desktop workflow is complete
-> and has passed real-data acceptance. A formally signed Windows Release still
-> requires the human license, code-signing, clean-host, and related release
-> gates. Automated builds are currently unsigned internal release candidates.
 
 ## 长期目标 / Long-Term Goal
 
@@ -65,22 +39,6 @@ turning project material that previously required manual browsing into
 structured, sourced, stateful, searchable, computable data that can eventually
 be consumed reliably by Tools, Workflows, and AI.
 
-```text
-Raw Project Files
-  -> Ingestion and Protected Workspace
-  -> Catalog and Lineage
-  -> Content Index
-  -> Business Semantic Layer
-  -> Project Information Graph
-  -> Search / Tool / Workflow / Agent / Automation
-```
-
-这是一条演进路线，不是 V1 已实现功能。PIG 会先建立可靠的对象、关系、状态、安全
-边界和工具契约，再考虑 RAG、Agent、Automation 或 MCP。
-
-This is an evolution path, not a list of features already present in V1. PIG
-will establish reliable objects, relationships, state, safety boundaries, and
-Tool contracts before introducing RAG, Agents, Automation, or MCP.
 
 ## PIG V1 功能 / PIG V1 Features
 
