@@ -21,10 +21,10 @@ dependencies = [
 pig-desktop = "pig.ui.app:main"
 
 [project.urls]
-Homepage = "https://github.com/zhu1635494497-del/PIG"
-Repository = "https://github.com/zhu1635494497-del/PIG.git"
-Issues = "https://github.com/zhu1635494497-del/PIG/issues"
-Releases = "https://github.com/zhu1635494497-del/PIG/releases"
+Homepage = "https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway"
+Repository = "https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git"
+Issues = "https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway/issues"
+Releases = "https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway/releases"
 
 [project.optional-dependencies]
 test = [

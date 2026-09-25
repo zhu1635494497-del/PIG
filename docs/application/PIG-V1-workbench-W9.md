@@ -3,7 +3,7 @@
 - 状态：公开源码基线已推送且远程 CI 已通过；Unsigned Internal RC 本地已就绪，正式 Release 仍阻断 / Status: public-source baseline pushed and remote CI passed; local unsigned Internal RC ready, official Release still blocked
 - 日期：2026-09-24 / Date: 2026-09-24
 - 决策：`ADR-021`，D78-A 至 D91-A / Decisions: `ADR-021`, D78-A through D91-A
-- 目标仓库：`https://github.com/zhu1635494497-del/PIG.git` / Target repository: `https://github.com/zhu1635494497-del/PIG.git`
+- 目标仓库：`https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git` / Target repository: `https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git`
 
 ## 中文实施记录
 

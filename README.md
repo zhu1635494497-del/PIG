@@ -192,8 +192,8 @@ bundle `7z.exe`; ZIP and 7z processing do not depend on external 7-Zip.
 ### 从源码运行 / Run from Source
 
 ```powershell
-git clone https://github.com/zhu1635494497-del/PIG.git
-cd PIG
+git clone https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git
+cd PIG-Project-Ingestion-Gateway
 py -3.10 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -e ".[test]"
@@ -275,12 +275,12 @@ tokens, certificates, or keys.
 
 ## 下载与发布 / Downloads and Releases
 
-正式 Windows 版本将发布在 [GitHub Releases](https://github.com/zhu1635494497-del/PIG/releases)，
+正式 Windows 版本将发布在 [GitHub Releases](https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway/releases)，
 而不是提交到 Git 历史。计划中的正式包包含版本化 Portable ZIP、SHA-256、SBOM、
 第三方声明和双语 Release Notes。
 
 Official Windows versions will be published through
-[GitHub Releases](https://github.com/zhu1635494497-del/PIG/releases), not
+[GitHub Releases](https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway/releases), not
 committed into Git history. A formal package is expected to include a versioned
 portable ZIP, SHA-256, SBOM, third-party notices, and bilingual release notes.
 

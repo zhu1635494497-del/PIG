@@ -170,7 +170,7 @@ Migration、测试、构建脚本和有效双语文档。明确排除 `.venv/`�
 `D87-A、D88-A、D89-A、D90-A、D91-A`。
 
 产品负责人已批准上述推荐组合，并指定公开仓库为
-`https://github.com/zhu1635494497-del/PIG.git`。首次公开 Push 前必须先提供精确文件清单
+`https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git`。首次公开 Push 前必须先提供精确文件清单
 并取得最终确认。W9 实施不代表 D80–D86 人工 Gate 已经通过；Gate 未闭合时只能生成
 Unsigned Internal RC，不得标记正式 V1 Release。
 
@@ -358,7 +358,7 @@ Recommended: `D78-A, D79-A, D80-A, D81-A, D82-A, D83-A, D84-A, D85-A, D86-A,`
 `D87-A, D88-A, D89-A, D90-A, D91-A`.
 
 The owner approved the complete recommended combination and selected
-`https://github.com/zhu1635494497-del/PIG.git` as the public repository. The exact
+`https://github.com/zhu1635494497-del/PIG-Project-Ingestion-Gateway.git` as the public repository. The exact
 file inventory and final confirmation are still required before the first public
 push. W9 implementation does not imply that the D80-D86 human gates have passed;
 until they close, automation may produce only an unsigned Internal RC and must
