@@ -31,7 +31,7 @@ red-black-tree-mod==1.22
 RTFDE==0.1.2.2
 shiboken6==6.10.3
 soupsieve==2.9.2
-SQLAlchemy==2.0.52
+SQLAlchemy==2.0.54
 texttable==1.7.0
 tomli==2.4.1
 typing_extensions==4.16.0
