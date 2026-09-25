@@ -10,15 +10,14 @@ hidden_imports = (
     + collect_submodules("py7zr")
     + ["sqlalchemy.dialects.sqlite.pysqlite"]
 )
+migrations_root = project_root / "migrations"
 datas = [
     (str(project_root / "alembic.ini"), "."),
-    (str(project_root / "migrations"), "migrations"),
-    (str(project_root / "release" / "THIRD_PARTY_NOTICES.md"), "."),
-    (str(project_root / "release" / "THIRD_PARTY_NOTICES.json"), "."),
-    (str(project_root / "release" / "pig-runtime.cdx.json"), "."),
-    (str(project_root / "release" / "pip-audit.json"), "."),
-    (str(project_root / "release" / "performance-baseline.json"), "."),
-    (str(project_root / "release" / "WORKBENCH-W9-RELEASE-CHECKLIST.md"), "."),
+    (str(migrations_root / "env.py"), "migrations"),
+    (str(migrations_root / "script.py.mako"), "migrations"),
+] + [
+    (str(path), "migrations/versions")
+    for path in sorted((migrations_root / "versions").glob("*.py"))
 ]
 
 a = Analysis(

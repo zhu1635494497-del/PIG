@@ -70,3 +70,17 @@ GitHub Actions 的 `unsigned-release-candidate.yml` 复用相同输入，只生�
 The GitHub Actions `unsigned-release-candidate.yml` workflow reuses the same
 inputs and produces only a short-lived artifact. It does not create a GitHub
 Release or access an Authenticode private key.
+
+## 下载包边界 / Download-package boundary
+
+PyInstaller 运行目录只嵌入程序启动所需的 Alembic 配置与明确列出的 Migration 文件。
+候选 ZIP 在独立 Staging 目录组装，并在根目录额外放置 `README.md`、`LICENSE`、
+`NOTICE`、第三方声明、SBOM 和漏洞审计结果。源码、测试、本地 Project、Acceptance、
+Build Cache 和内部发布检查表不得进入下载 ZIP。
+
+The PyInstaller runtime embeds only the Alembic configuration and explicitly
+listed migration files needed to start the application. The candidate ZIP is
+assembled in a separate staging directory and adds `README.md`, `LICENSE`,
+`NOTICE`, third-party notices, the SBOM, and vulnerability-audit output at its
+root. Source, tests, local Projects, acceptance data, build caches, and internal
+release checklists must not enter the download ZIP.

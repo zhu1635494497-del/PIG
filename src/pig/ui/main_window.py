@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+import html
 import logging
 from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Iterable, TypeVar
 
-from PySide6.QtCore import QEvent, QTimer, Qt, Signal
+from PySide6.QtCore import QEvent, QSize, QTimer, Qt, Signal
 from PySide6.QtGui import QAction, QCloseEvent, QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QFileDialog,
+    QFrame,
+    QHeaderView,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -18,13 +21,14 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMenu,
     QMessageBox,
-    QPlainTextEdit,
     QProgressBar,
     QPushButton,
     QSplitter,
+    QStyle,
     QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QTextBrowser,
     QToolButton,
     QTreeWidget,
     QTreeWidgetItem,
@@ -63,6 +67,8 @@ from pig.domain.enums import (
     WorkspaceExportKind,
 )
 from pig.domain.paths import safe_filesystem_segment
+from pig.ui.theme import apply_workbench_theme
+
 T = TypeVar("T")
 ITEM_ID_ROLE = int(Qt.ItemDataRole.UserRole)
 ITEM_KIND_ROLE = ITEM_ID_ROLE + 1
@@ -260,8 +266,10 @@ class MainWindow(QMainWindow):
         self._logger = logging.getLogger(__name__)
 
         self.setWindowTitle("PIG — Project Ingestion Gateway")
-        self.resize(1280, 800)
+        self.resize(1380, 860)
+        self.setMinimumSize(1080, 680)
         self.setAcceptDrops(True)
+        apply_workbench_theme(self)
         self._build_actions()
         self._build_ui()
         self._set_project_actions_enabled(False)
@@ -276,6 +284,34 @@ class MainWindow(QMainWindow):
         self.delete_action = QAction("软删除", self)
         self.refresh_action = QAction("刷新工作区", self)
         self.export_action = QAction("导出所选", self)
+        standard_icons = {
+            self.new_project_action: QStyle.StandardPixmap.SP_FileDialogNewFolder,
+            self.open_project_action: QStyle.StandardPixmap.SP_DialogOpenButton,
+            self.recovery_action: QStyle.StandardPixmap.SP_MessageBoxWarning,
+            self.add_files_action: QStyle.StandardPixmap.SP_FileIcon,
+            self.add_folder_action: QStyle.StandardPixmap.SP_DirIcon,
+            self.create_folder_action: QStyle.StandardPixmap.SP_FileDialogNewFolder,
+            self.delete_action: QStyle.StandardPixmap.SP_TrashIcon,
+            self.refresh_action: QStyle.StandardPixmap.SP_BrowserReload,
+            self.export_action: QStyle.StandardPixmap.SP_DialogSaveButton,
+        }
+        tooltips = {
+            self.new_project_action: "新建一个独立的 PIG 项目（Ctrl+N）",
+            self.open_project_action: "打开已有 project.sqlite（Ctrl+O）",
+            self.recovery_action: "检查并恢复中断的项目操作",
+            self.add_files_action: "把一个或多个文件加入当前文件夹",
+            self.add_folder_action: "把文件夹及其结构加入当前工作区",
+            self.create_folder_action: "在工作区中创建整理用文件夹",
+            self.delete_action: "将所选项目移到已删除项目",
+            self.refresh_action: "重新载入当前工作区（F5）",
+            self.export_action: "按当前工作区结构导出所选项目",
+        }
+        for action, standard_icon in standard_icons.items():
+            action.setIcon(self.style().standardIcon(standard_icon))
+            action.setToolTip(tooltips[action])
+        self.new_project_action.setShortcut("Ctrl+N")
+        self.open_project_action.setShortcut("Ctrl+O")
+        self.refresh_action.setShortcut("F5")
         self.new_project_action.triggered.connect(self._new_project)
         self.open_project_action.triggered.connect(self._choose_project)
         self.recovery_action.triggered.connect(self._inspect_active_project_recovery)
@@ -285,65 +321,126 @@ class MainWindow(QMainWindow):
         self.delete_action.triggered.connect(self._delete_selected)
         self.refresh_action.triggered.connect(self._reload_workspace)
         self.export_action.triggered.connect(self._export_selected)
-        toolbar = self.addToolBar("Workbench")
-        toolbar.setMovable(False)
+        self.toolbar = self.addToolBar("Workbench")
+        self.toolbar.setObjectName("mainToolbar")
+        self.toolbar.setMovable(False)
+        self.toolbar.setFloatable(False)
+        self.toolbar.setIconSize(QSize(18, 18))
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        for action in (self.new_project_action, self.open_project_action):
+            self.toolbar.addAction(action)
+        self.toolbar.addSeparator()
+        self.toolbar.addAction(self.recovery_action)
+        self.toolbar.addSeparator()
         for action in (
-            self.new_project_action,
-            self.open_project_action,
-            self.recovery_action,
             self.add_files_action,
             self.add_folder_action,
             self.create_folder_action,
-            self.delete_action,
-            self.refresh_action,
-            self.export_action,
         ):
-            toolbar.addAction(action)
+            self.toolbar.addAction(action)
+        self.toolbar.addSeparator()
+        for action in (self.refresh_action, self.export_action, self.delete_action):
+            self.toolbar.addAction(action)
 
     def _build_ui(self) -> None:
         root = WorkbenchDropSurface(self)
         self.drop_surface = root
         root.external_paths_dropped.connect(lambda paths: self._add_inputs(paths, None))
-        root.setStyleSheet(
-            "WorkbenchDropSurface[external_drag_active='true'] {"
-            " border: 2px dashed #3b82f6; background: #eff6ff; }"
-        )
         layout = QVBoxLayout(root)
-        self.project_location = QLabel("项目：未打开")
+        layout.setContentsMargins(18, 14, 18, 14)
+        layout.setSpacing(11)
+
+        project_header = QFrame()
+        project_header.setObjectName("projectHeader")
+        project_header_layout = QHBoxLayout(project_header)
+        project_header_layout.setContentsMargins(16, 12, 16, 12)
+        project_header_layout.setSpacing(12)
+        project_identity = QVBoxLayout()
+        project_identity.setSpacing(1)
+        product_eyebrow = QLabel("PIG  ·  PROJECT WORKBENCH")
+        product_eyebrow.setObjectName("productEyebrow")
+        self.project_location = QLabel("尚未打开项目")
+        self.project_location.setObjectName("projectTitle")
+        self.project_location.setTextFormat(Qt.TextFormat.PlainText)
         self.project_location.setTextInteractionFlags(
             Qt.TextInteractionFlag.TextSelectableByMouse
         )
-        layout.addWidget(self.project_location)
-        self.recovery_banner = QLabel()
-        self.recovery_banner.setStyleSheet(
-            "padding: 8px; color: #7c2d12; background: #ffedd5; "
-            "border: 1px solid #fdba74;"
+        self.project_meta = QLabel("新建或打开一个项目，然后将文件拖入窗口任意位置")
+        self.project_meta.setObjectName("projectMeta")
+        self.project_meta.setTextFormat(Qt.TextFormat.PlainText)
+        self.project_meta.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
         )
+        project_identity.addWidget(product_eyebrow)
+        project_identity.addWidget(self.project_location)
+        project_identity.addWidget(self.project_meta)
+        project_header_layout.addLayout(project_identity, 1)
+        self.project_state = QLabel("未打开")
+        self.project_state.setObjectName("projectState")
+        self.project_state.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        project_header_layout.addWidget(
+            self.project_state, 0, Qt.AlignmentFlag.AlignVCenter
+        )
+        layout.addWidget(project_header)
+
+        self.recovery_banner = QLabel()
+        self.recovery_banner.setObjectName("recoveryBanner")
         self.recovery_banner.setWordWrap(True)
         self.recovery_banner.hide()
         layout.addWidget(self.recovery_banner)
 
-        search_row = QHBoxLayout()
+        search_panel = QFrame()
+        search_panel.setObjectName("searchPanel")
+        search_panel_layout = QHBoxLayout(search_panel)
+        search_panel_layout.setContentsMargins(12, 9, 12, 9)
+        search_panel_layout.setSpacing(8)
+        search_label_group = QVBoxLayout()
+        search_label_group.setSpacing(0)
+        search_title = QLabel("查找文件")
+        search_title.setObjectName("searchTitle")
+        search_hint = QLabel("名称、路径或来源")
+        search_hint.setObjectName("sectionHint")
+        search_label_group.addWidget(search_title)
+        search_label_group.addWidget(search_hint)
+        search_panel_layout.addLayout(search_label_group)
         self.search_text = QLineEdit()
-        self.search_text.setPlaceholderText("搜索工作区名称、路径或原始名称")
+        self.search_text.setPlaceholderText("输入关键词…")
+        self.search_text.setClearButtonEnabled(True)
         self.format_filter = FormatMultiSelect()
+        self.format_filter.setProperty("filter", True)
+        self.format_filter.setToolTip("可同时选择多个文件格式")
         self.content_filter = EnumMultiSelect(WorkingContentStatus, "全部工作状态")
+        self.content_filter.setProperty("filter", True)
+        self.content_filter.setToolTip("可同时选择多个工作状态")
         self.search_button = QPushButton("搜索")
-        self.clear_search_button = QPushButton("清除")
+        self.search_button.setProperty("variant", "primary")
+        self.clear_search_button = QPushButton("重置")
+        self.clear_search_button.setProperty("variant", "quiet")
         self.search_button.clicked.connect(self._search)
         self.clear_search_button.clicked.connect(self._clear_search)
         self.search_text.returnPressed.connect(self._search)
-        search_row.addWidget(QLabel("Workspace Search"))
-        search_row.addWidget(self.search_text, 1)
-        search_row.addWidget(self.format_filter)
-        search_row.addWidget(self.content_filter)
-        search_row.addWidget(self.search_button)
-        search_row.addWidget(self.clear_search_button)
-        layout.addLayout(search_row)
+        search_panel_layout.addWidget(self.search_text, 1)
+        search_panel_layout.addWidget(self.format_filter)
+        search_panel_layout.addWidget(self.content_filter)
+        search_panel_layout.addWidget(self.search_button)
+        search_panel_layout.addWidget(self.clear_search_button)
+        layout.addWidget(search_panel)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(8)
         self.left_tabs = QTabWidget()
+        self.left_tabs.setMinimumWidth(620)
         self.tree = WorkspaceTree()
+        self.tree.setAlternatingRowColors(True)
+        self.tree.setUniformRowHeights(True)
+        self.tree.setIndentation(20)
+        self.tree.header().setHighlightSections(False)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        for column in (1, 2, 3):
+            self.tree.header().setSectionResizeMode(
+                column, QHeaderView.ResizeMode.ResizeToContents
+            )
         self.tree.itemSelectionChanged.connect(self._tree_selection_changed)
         self.tree.itemDoubleClicked.connect(self._tree_double_clicked)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
@@ -361,6 +458,7 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionMode.ExtendedSelection
         )
         self.search_results.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._polish_table(self.search_results, stretch_column=1)
         self.search_results.itemSelectionChanged.connect(self._search_selection_changed)
         self.search_results.itemDoubleClicked.connect(self._search_double_clicked)
         self.search_results.setContextMenuPolicy(
@@ -377,6 +475,7 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionBehavior.SelectRows
         )
         self.deleted_items.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self._polish_table(self.deleted_items, stretch_column=1)
         self.deleted_items.itemSelectionChanged.connect(self._deleted_selection_changed)
         self.deleted_items.setContextMenuPolicy(
             Qt.ContextMenuPolicy.CustomContextMenu
@@ -384,34 +483,57 @@ class MainWindow(QMainWindow):
         self.deleted_items.customContextMenuRequested.connect(
             self._show_deleted_context_menu
         )
-        self.left_tabs.addTab(self.tree, "Workspace")
-        self.left_tabs.addTab(self.search_results, "Search Results")
-        self.left_tabs.addTab(self.deleted_items, "已删除项目")
+        self.left_tabs.addTab(self.tree, "工作区")
+        self.left_tabs.addTab(self.search_results, "搜索结果")
+        self.left_tabs.addTab(self.deleted_items, "回收站")
 
-        right_tabs = QTabWidget()
+        self.right_tabs = QTabWidget()
+        self.right_tabs.setMinimumWidth(390)
         details_page = QWidget()
         details_layout = QVBoxLayout(details_page)
-        self.details = QPlainTextEdit()
+        details_layout.setContentsMargins(12, 12, 12, 10)
+        details_layout.setSpacing(8)
+        self.detail_title = QLabel("未选择项目")
+        self.detail_title.setObjectName("detailTitle")
+        self.detail_title.setTextFormat(Qt.TextFormat.PlainText)
+        self.detail_subtitle = QLabel("在左侧选择一个文件或文件夹查看详情")
+        self.detail_subtitle.setObjectName("detailSubtitle")
+        self.detail_subtitle.setTextFormat(Qt.TextFormat.PlainText)
+        self.detail_subtitle.setWordWrap(True)
+        details_layout.addWidget(self.detail_title)
+        details_layout.addWidget(self.detail_subtitle)
+        self.details = QTextBrowser()
+        self.details.setObjectName("itemDetails")
         self.details.setReadOnly(True)
         self.details.setAcceptDrops(False)
+        self.details.setOpenExternalLinks(False)
+        self.details.setHtml(self._empty_detail_html())
         version_row = QHBoxLayout()
+        version_group = QVBoxLayout()
+        version_title = QLabel("版本保护")
+        version_title.setObjectName("sectionTitle")
         self.versions = QTableWidget(0, 4)
         self.versions.setHorizontalHeaderLabels(
             ["版本", "文件修改时间", "PIG 检测时间", "SHA-256"]
         )
         self.versions.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.versions.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
-        self.versions.setMaximumHeight(120)
+        self.versions.setMaximumHeight(128)
+        self._polish_table(self.versions, stretch_column=3)
         self.rollback_button = QPushButton("回滚到上一版本")
         self.rollback_button.clicked.connect(self._rollback_working_file)
         self.rollback_button.setEnabled(False)
-        version_row.addWidget(self.versions, 1)
-        version_row.addWidget(self.rollback_button)
+        version_group.addWidget(version_title)
+        version_group.addWidget(self.versions)
+        version_row.addLayout(version_group, 1)
+        version_row.addWidget(self.rollback_button, 0, Qt.AlignmentFlag.AlignBottom)
         button_row = QHBoxLayout()
-        self.open_selected_button = QPushButton("打开")
-        self.refresh_file_button = QPushButton("刷新文件状态")
+        button_row.setSpacing(7)
+        self.open_selected_button = QPushButton("打开文件")
+        self.open_selected_button.setProperty("variant", "primary")
+        self.refresh_file_button = QPushButton("刷新状态")
         self.restore_working_button = QPushButton("从原始备份恢复")
-        self.restore_deleted_button = QPushButton("恢复已删除项目")
+        self.restore_deleted_button = QPushButton("恢复到工作区")
         self.open_selected_button.clicked.connect(self._open_selected)
         self.refresh_file_button.clicked.connect(
             lambda: self._refresh_selected_file()
@@ -426,19 +548,23 @@ class MainWindow(QMainWindow):
         ):
             button.setEnabled(False)
             button_row.addWidget(button)
+        button_row.addStretch(1)
         details_layout.addWidget(self.details, 1)
         details_layout.addLayout(version_row)
         details_layout.addLayout(button_row)
-        right_tabs.addTab(details_page, "Item Details / Origin")
+        self.right_tabs.addTab(details_page, "文件详情")
         self.events = QTableWidget(0, 5)
         self.events.setHorizontalHeaderLabels(
             ["本地时间", "级别", "事件", "Workspace Item", "错误码"]
         )
         self.events.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-        right_tabs.addTab(self.events, "Activity")
+        self._polish_table(self.events, stretch_column=2)
+        self.right_tabs.addTab(self.events, "活动记录")
         splitter.addWidget(self.left_tabs)
-        splitter.addWidget(right_tabs)
-        splitter.setSizes([760, 520])
+        splitter.addWidget(self.right_tabs)
+        splitter.setStretchFactor(0, 8)
+        splitter.setStretchFactor(1, 5)
+        splitter.setSizes([840, 520])
         layout.addWidget(splitter, 1)
         self.setCentralWidget(root)
         for widget in (
@@ -454,10 +580,43 @@ class MainWindow(QMainWindow):
 
         self.busy_indicator = QProgressBar()
         self.busy_indicator.setRange(0, 0)
-        self.busy_indicator.setMaximumWidth(150)
+        self.busy_indicator.setMaximumWidth(130)
         self.busy_indicator.hide()
         self.statusBar().addPermanentWidget(self.busy_indicator)
         self.statusBar().showMessage("请新建或打开一个 Workbench Project")
+
+    @staticmethod
+    def _polish_table(table: QTableWidget, *, stretch_column: int) -> None:
+        table.setShowGrid(False)
+        table.setAlternatingRowColors(True)
+        table.verticalHeader().setVisible(False)
+        table.verticalHeader().setDefaultSectionSize(32)
+        table.horizontalHeader().setHighlightSections(False)
+        table.horizontalHeader().setSectionResizeMode(
+            stretch_column, QHeaderView.ResizeMode.Stretch
+        )
+
+    @staticmethod
+    def _empty_detail_html() -> str:
+        return (
+            "<div style='color:#7b8794; padding:18px 4px;'>"
+            "选择工作区中的项目后，这里会显示工作位置、来源和文件状态。"
+            "</div>"
+        )
+
+    def _set_project_state(self, text: str, state: str = "idle") -> None:
+        self.project_state.setText(text)
+        self.project_state.setProperty("state", state)
+        self.project_state.style().unpolish(self.project_state)
+        self.project_state.style().polish(self.project_state)
+
+    def _workspace_item_icon(self, view: WorkspaceItemView):
+        standard_icon = (
+            QStyle.StandardPixmap.SP_FileIcon
+            if view.item.item_kind == WorkspaceItemKind.FILE
+            else QStyle.StandardPixmap.SP_DirIcon
+        )
+        return self.style().standardIcon(standard_icon)
 
     def _new_project(self) -> None:
         name, accepted = QInputDialog.getText(self, "新建项目", "项目名称")
@@ -504,6 +663,7 @@ class MainWindow(QMainWindow):
         self._project_id = project_id
         self._database_path = Path(database_path)
         self._recovery_required = True
+        self._set_project_state("检查恢复状态", "warning")
         self._set_project_actions_enabled(False)
         self._inspect_active_project_recovery()
 
@@ -526,6 +686,7 @@ class MainWindow(QMainWindow):
         self._recovery_inspection_token = result.inspection_token
         if not result.recovery_required:
             self.recovery_banner.hide()
+            self._set_project_state("正在载入")
             self._set_project_actions_enabled(True)
             self._reload_workspace()
             return
@@ -533,6 +694,7 @@ class MainWindow(QMainWindow):
             f"检测到 {len(result.candidates)} 个中断操作或未登记对象。"
             "项目当前为只读状态；确认恢复前不会移动或删除任何数据。"
         )
+        self._set_project_state("需要恢复", "warning")
         self.recovery_banner.show()
         self._set_project_actions_enabled(False)
         preview = "\n".join(
@@ -577,6 +739,7 @@ class MainWindow(QMainWindow):
             return
         self._recovery_required = False
         self._recovery_inspection_token = None
+        self._set_project_state("正在载入")
         self.recovery_banner.hide()
         QMessageBox.information(
             self,
@@ -591,6 +754,7 @@ class MainWindow(QMainWindow):
         self._database_path = Path(database_path)
         self._recovery_required = False
         self._recovery_inspection_token = None
+        self._set_project_state("正在载入")
         self.recovery_banner.hide()
         self._set_project_actions_enabled(self._worker_thread is None)
         self._reload_workspace()
@@ -1036,6 +1200,7 @@ class MainWindow(QMainWindow):
                 cell = QTableWidgetItem(value)
                 if column == 0:
                     cell.setData(ITEM_ID_ROLE, view.item.id)
+                    cell.setIcon(self._workspace_item_icon(view))
                 self.search_results.setItem(row, column, cell)
         self.left_tabs.setCurrentWidget(self.search_results)
         suffix = "（仅显示前 200 条）" if result.has_more else ""
@@ -1078,11 +1243,13 @@ class MainWindow(QMainWindow):
         }
         self.setWindowTitle(f"PIG — {result.project.name}")
         self._project_name = result.project.name
-        self.project_location.setText(
-            f"项目：{result.project.name} · Revision {result.workspace_revision} · "
-            f"存储位置：{self._database_path.parent}"
+        self.project_location.setText(result.project.name)
+        self.project_meta.setText(
+            f"Revision {result.workspace_revision}  ·  {self._database_path.parent}"
         )
         self.project_location.setToolTip(str(self._database_path))
+        self.project_meta.setToolTip(str(self._database_path))
+        self._set_project_state("工作区就绪", "ready")
         self.tree.clear()
         widgets = {}
         pending = list(result.items)
@@ -1102,6 +1269,9 @@ class MainWindow(QMainWindow):
                 )
                 widget.setData(0, ITEM_ID_ROLE, view.item.id)
                 widget.setData(0, ITEM_KIND_ROLE, view.item.item_kind.value)
+                widget.setIcon(0, self._workspace_item_icon(view))
+                widget.setToolTip(0, view.workspace_path)
+                widget.setToolTip(3, self._working_status(view))
                 parent = widgets.get(parent_id)
                 if parent is None:
                     self.tree.addTopLevelItem(widget)
@@ -1127,6 +1297,7 @@ class MainWindow(QMainWindow):
                 cell = QTableWidgetItem(value)
                 if column == 0:
                     cell.setData(ITEM_ID_ROLE, view.item.id)
+                    cell.setIcon(self._workspace_item_icon(view))
                 self.deleted_items.setItem(row, column, cell)
         self._populate_events(events)
         selected_widget = widgets.get(selected_id)
@@ -1274,44 +1445,117 @@ class MainWindow(QMainWindow):
         ):
             button.setProperty("workspace_item_id", item_id)
         if view is None:
-            self.details.clear()
+            self.detail_title.setText("未选择项目")
+            self.detail_subtitle.setText("在左侧选择一个文件或文件夹查看详情")
+            self.details.setHtml(self._empty_detail_html())
             self.versions.setRowCount(0)
             self._update_item_buttons(None)
             return
-        node = view.source_node
-        working = view.working_artifact
-        lines = [
-            f"Name: {view.item.display_name}",
-            f"Workspace Path: {view.workspace_path}",
-            f"Kind: {view.item.item_kind.value}",
-            f"Lifecycle: {view.item.lifecycle_status.value}",
-            f"Materialization: {view.item.materialization_status.value}",
-            f"Working State: {self._working_status(view)}",
-        ]
-        if node is not None:
-            lines.extend(
-                (
-                    "",
-                    "Origin:",
-                    f"- Original Name: {node.original_name}",
-                    f"- Source Logical Path: {node.logical_path}",
-                    f"- Format / Processing: {node.format.value} / {node.status.value}",
-                    f"- Source Node ID: {node.id}",
-                )
-            )
-        if working is not None:
-            lines.extend(
-                (
-                    "",
-                    "Working Artifact:",
-                    f"- Storage Key: {working.storage_key}",
-                    f"- Baseline: {working.baseline_size} bytes / {working.baseline_sha256}",
-                    f"- Current: {working.current_size} bytes / {working.current_sha256}",
-                )
-            )
-        self.details.setPlainText("\n".join(lines))
+        self.detail_title.setText(view.item.display_name)
+        self.detail_subtitle.setText(view.workspace_path)
+        self.details.setHtml(self._detail_html(view))
         self._show_versions(view)
         self._update_item_buttons(view)
+
+    def _detail_html(self, view: WorkspaceItemView) -> str:
+        def row(label: str, value: object, *, code: bool = False) -> str:
+            safe_label = html.escape(label)
+            safe_value = html.escape(str(value))
+            family = "font-family:Consolas,'Courier New',monospace;" if code else ""
+            return (
+                "<tr>"
+                "<td style='width:112px;color:#73808d;padding:5px 10px 5px 0;"
+                "vertical-align:top;'>"
+                f"{safe_label}</td>"
+                f"<td style='color:#263442;padding:5px 0;{family}'>"
+                f"{safe_value}</td>"
+                "</tr>"
+            )
+
+        sections = [
+            "<div class='section'>工作区信息</div>",
+            "<table width='100%' cellspacing='0'>",
+            row("工作区路径", view.workspace_path),
+            row("项目类型", self._friendly_value(view.item.item_kind.value)),
+            row("生命周期", self._friendly_value(view.item.lifecycle_status.value)),
+            row(
+                "准备状态",
+                self._friendly_value(view.item.materialization_status.value),
+            ),
+            row("文件状态", self._friendly_value(self._working_status(view))),
+            "</table>",
+        ]
+        node = view.source_node
+        if node is not None:
+            sections.extend(
+                (
+                    "<div class='section'>来源</div>",
+                    "<table width='100%' cellspacing='0'>",
+                    row("原始名称", node.original_name),
+                    row("来源路径", node.logical_path),
+                    row("格式", node.format.value),
+                    row("处理状态", self._friendly_value(node.status.value)),
+                    row("来源节点 ID", node.id, code=True),
+                    "</table>",
+                )
+            )
+        working = view.working_artifact
+        if working is not None:
+            sections.extend(
+                (
+                    "<div class='section'>当前工作副本</div>",
+                    "<table width='100%' cellspacing='0'>",
+                    row("存储标识", working.storage_key, code=True),
+                    row("原始基线大小", self._format_bytes(working.baseline_size)),
+                    row("当前大小", self._format_bytes(working.current_size)),
+                    row("原始基线 SHA-256", working.baseline_sha256, code=True),
+                    row("当前 SHA-256", working.current_sha256, code=True),
+                    "</table>",
+                )
+            )
+        return (
+            "<style>"
+            "body{font-family:'Microsoft YaHei UI';font-size:12px;color:#263442;}"
+            ".section{margin-top:8px;padding:7px 0 5px 0;color:#315f86;"
+            "font-size:13px;font-weight:600;border-bottom:1px solid #e6ebef;}"
+            "td{word-wrap:break-word;}"
+            "</style>"
+            + "".join(sections)
+        )
+
+    @staticmethod
+    def _friendly_value(value: str) -> str:
+        return {
+            "FILE": "文件",
+            "FOLDER": "文件夹",
+            "CONTAINER_VIEW": "容器结构",
+            "ACTIVE": "使用中",
+            "DELETED": "已移到回收站",
+            "PURGED": "已撤销导入",
+            "VIRTUAL": "按需准备（尚未打开）",
+            "MATERIALIZING": "正在准备",
+            "MATERIALIZED": "工作副本已就绪",
+            "CLEAN": "未检测到修改",
+            "CHECKING": "正在检查",
+            "MODIFIED": "已修改",
+            "MISSING": "工作文件缺失",
+            "UNREADABLE": "工作文件无法读取",
+            "DISCOVERED": "已发现",
+            "PENDING": "等待处理",
+            "PROCESSING": "正在处理",
+            "SUCCESS": "处理成功",
+            "PARTIAL_SUCCESS": "部分成功",
+            "UNSUPPORTED": "暂不支持",
+            "PASSWORD_REQUIRED": "需要密码",
+            "CORRUPTED": "文件损坏",
+            "LIMIT_EXCEEDED": "超过安全限制",
+            "SECURITY_BLOCKED": "已被安全策略阻止",
+            "SOURCE_MISSING": "来源缺失",
+            "SOURCE_CHANGED": "来源已变化",
+            "FAILED": "处理失败",
+            "SKIPPED": "已跳过",
+            "INTERRUPTED": "操作中断",
+        }.get(value, value)
 
     def _show_versions(self, view) -> None:
         self.versions.setRowCount(0)

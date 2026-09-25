@@ -59,7 +59,16 @@ jobs:
           $flow = Start-Process $exe -ArgumentList @("--acceptance-smoke-test", $acceptanceRoot) -WindowStyle Hidden -Wait -PassThru
           if ($runtime.ExitCode -ne 0) { throw "Runtime smoke failed: $($runtime.ExitCode)" }
           if ($flow.ExitCode -ne 0) { throw "Packaged flow failed: $($flow.ExitCode)" }
-          python tools\generate_release_metadata.py --output-dir release --distribution-dir dist\workbench-w9\PIG
+          $version = $env:GITHUB_REF_NAME
+          if ([string]::IsNullOrWhiteSpace($version)) { $version = "manual" }
+          $candidateRoot = "dist\release-candidate\PIG-$version-windows-x64-unsigned"
+          New-Item -ItemType Directory -Path $candidateRoot -Force | Out-Null
+          Get-ChildItem -LiteralPath "dist\workbench-w9\PIG" -Force | Copy-Item -Destination $candidateRoot -Recurse -Force
+          Copy-Item README.md,LICENSE,NOTICE -Destination $candidateRoot
+          Copy-Item release\THIRD_PARTY_NOTICES.md -Destination "$candidateRoot\THIRD_PARTY_NOTICES.md"
+          Copy-Item release\pig-runtime.cdx.json -Destination "$candidateRoot\SBOM.json"
+          Copy-Item release\pip-audit.json -Destination "$candidateRoot\VULNERABILITY-AUDIT.json"
+          python tools\generate_release_metadata.py --output-dir release --distribution-dir $candidateRoot
           $report = Get-ChildItem -LiteralPath $acceptanceRoot -Recurse -Filter "workbench-acceptance-report.json" | Select-Object -First 1
           if ($null -eq $report) { throw "Packaged-flow report was not created" }
           python tools\generate_windows_build_report.py --acceptance-report $report.FullName --runtime-smoke-exit-code $runtime.ExitCode --packaged-flow-exit-code $flow.ExitCode
@@ -72,7 +81,8 @@ jobs:
           if ([string]::IsNullOrWhiteSpace($version)) { $version = "manual" }
           $archive = "PIG-$version-windows-x64-unsigned.zip"
           $checksum = "$archive.sha256"
-          Compress-Archive -LiteralPath "dist\workbench-w9\PIG" -DestinationPath $archive -CompressionLevel Optimal
+          $candidateRoot = "dist\release-candidate\PIG-$version-windows-x64-unsigned"
+          Compress-Archive -LiteralPath $candidateRoot -DestinationPath $archive -CompressionLevel Optimal
           $hash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
           "$hash  $archive" | Out-File -LiteralPath $checksum -Encoding ascii
           "archive=$archive" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
