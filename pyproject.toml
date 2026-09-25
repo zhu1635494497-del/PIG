@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pig-project-ingestion-gateway"
-version = "0.1.0"
+version = "1.0.0rc1"
 description = "A project workbench for complex nested business files"
 readme = "README.md"
 license = { file = "LICENSE" }

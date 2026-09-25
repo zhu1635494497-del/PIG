@@ -11,6 +11,15 @@ PyInstaller is not a cross-compiler, so builds must run on the target OS. ZIP
 uses the Python standard library and 7z uses `py7zr`; RAR uses only a validated,
 operator-installed external 7-Zip. The package must not bundle `7z.exe`.
 
+候选版使用标准语义化 Git Tag，例如 `v1.0.0-rc.1`；Python 包元数据使用
+对应的 PEP 440 版本 `1.0.0rc1`。GitHub Release 必须标记为 Pre-release，资产名称
+保留 `-unsigned`，直到签名和其他人工 Gate 全部完成。
+
+Candidates use standard semantic Git tags such as `v1.0.0-rc.1`, with the
+corresponding PEP 440 package version `1.0.0rc1`. The GitHub Release must be
+marked as a pre-release and asset names retain `-unsigned` until signing and all
+other human gates are complete.
+
 ## 可复现输入与证据 / Reproducible inputs and evidence
 
 在干净的 Python 3.10 环境安装精确锁文件，再生成 runtime requirements、第三方声明、

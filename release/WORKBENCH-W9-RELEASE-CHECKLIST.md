@@ -2,7 +2,7 @@
 
 - 状态：发布资格实施中；正式外发仍阻断 / Status: release qualification in progress; official distribution remains blocked
 - 目标：Windows x64 Portable `onedir` ZIP / Target: Windows x64 portable `onedir` ZIP
-- 当前版本：`0.1.0` Pre-release / Current version: `0.1.0` pre-release
+- 当前版本：`1.0.0rc1`（Git Tag `v1.0.0-rc.1`）Pre-release / Current version: `1.0.0rc1` pre-release with Git tag `v1.0.0-rc.1`
 
 ## 源码仓库门 / Source repository gates
 
